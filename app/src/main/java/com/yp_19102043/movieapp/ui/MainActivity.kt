@@ -1,5 +1,6 @@
 package com.yp_19102043.movieapp.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.google.android.material.snackbar.Snackbar
@@ -19,6 +20,7 @@ import com.yp_19102043.movieapp.R
 import com.yp_19102043.movieapp.adapter.MainAdapter
 import com.yp_19102043.movieapp.databinding.ActivityMainBinding
 import com.yp_19102043.movieapp.model.Constant
+import com.yp_19102043.movieapp.model.MovieModel
 import com.yp_19102043.movieapp.model.MovieResponse
 import com.yp_19102043.movieapp.retrofit.ApiService
 import kotlinx.android.synthetic.main.content_main.*
@@ -26,15 +28,19 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+const val moviePopular = 0
+const val movieNowPlaying = 1
+
 class MainActivity : AppCompatActivity() {
-    private val TAG: String = ""
+    private val TAG: String = "MainActivity"
     lateinit var mainAdapter: MainAdapter
+    private var movieCategory = 0
+    private val api = ApiService().endpoint
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
-        setupvView()
         setupRecylceView()
         }
 
@@ -43,15 +49,39 @@ class MainActivity : AppCompatActivity() {
         getMovie()
     }
 
-    private fun setupvView(){
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener {view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId){
+            R.id.action_popular -> {
+                showMessage("Movie popular selected")
+                movieCategory = moviePopular
+                getMovie()
+                true
+            }
+            R.id.action_now_playing -> {
+                showMessage("Movie now playing selected")
+                movieCategory = movieNowPlaying
+                getMovie()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
+
     }
 
     private fun setupRecylceView(){
-        mainAdapter = MainAdapter(arrayListOf())
+        mainAdapter = MainAdapter(arrayListOf(), object : MainAdapter.OnAdapterListener{
+            override fun onClick(movie: MovieModel) {
+                Constant.MOVIE_ID = movie.id!!
+                Constant.MOVIE_TITLE = movie.title!!
+                startActivity(Intent(applicationContext, DetailActivity::class.java))
+            }
+
+        })
         list_movie.apply {
             layoutManager = GridLayoutManager(context, 2)
             adapter = mainAdapter
@@ -61,7 +91,18 @@ class MainActivity : AppCompatActivity() {
 
     fun getMovie(){
         showLoading(true)
-        ApiService().endpoint.getMovieNowPlaying(Constant.API_KEY, 1)
+
+        var apiCall: Call<MovieResponse>? = null
+        when(movieCategory){
+            moviePopular -> {
+                apiCall = api.getMoviePopular (Constant.API_KEY, 1)
+            }
+            movieNowPlaying -> {
+                apiCall = api.getMovieNowPlaying(Constant.API_KEY, 1)
+            }
+        }
+
+        apiCall!!
             .enqueue(object : Callback<MovieResponse>{
                 override fun onResponse(
                     call: Call<MovieResponse>,
@@ -90,12 +131,6 @@ class MainActivity : AppCompatActivity() {
 
 
     fun showMovie(response: MovieResponse){
-//        Log.d(TAG, "responsMovie: $response")
-//        Log.d(TAG, "responsMovie: ${response.total_pages}")
-//
-//        for (movie in response.results){
-//            Log.d(TAG, "Movie Title: ${movie.title}")
-//        }
         mainAdapter.setData(response.results)
 
     }
@@ -103,6 +138,8 @@ class MainActivity : AppCompatActivity() {
     fun showMessage(msg: String){
         Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show()
     }
+
+
 
 
     }
