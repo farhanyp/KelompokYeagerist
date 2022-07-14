@@ -1,4 +1,4 @@
-package com.yp_19102043.movieapp.ui
+package com.yp_19102043.movieapp.activity
 
 import android.os.Bundle
 import android.view.View

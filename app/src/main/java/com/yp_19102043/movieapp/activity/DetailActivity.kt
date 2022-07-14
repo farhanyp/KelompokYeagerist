@@ -1,9 +1,8 @@
-package com.yp_19102043.movieapp.ui
+package com.yp_19102043.movieapp.activity
 
 import android.content.Intent
 import  android.os.Bundle
 import android.util.Log
-import com.google.android.material.appbar.CollapsingToolbarLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.picasso.Picasso
 import com.yp_19102043.movieapp.R
